@@ -10,14 +10,18 @@ from bot.utils.extractor import extract_user_info
 from bot.utils.safe_send import safe_send_message
 from bot.utils.logger import logger
 
-MATH_PATTERN = re.compile(r'([-+]?\\d[\\d\\.\\s]*(?:[+\\-*/×÷%]\\s*[\\d\\.\\s]+)+)')
+# Fixed regex pattern
+MATH_PATTERN = re.compile(r'([-+]?\d[\d.\s]*(?:[+\-*/×÷%]\s*[\d.\s]+)+)')
 
 async def calculate_expression(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ui = extract_user_info(update)
     text = update.message.text or ""
     matches = MATH_PATTERN.findall(text)
     is_private = update.effective_chat.type == ChatType.PRIVATE
-    is_reply_to_bot = update.message.reply_to_message and update.message.reply_to_message.from_user.id == context.bot.id
+    is_reply_to_bot = (
+        update.message.reply_to_message
+        and update.message.reply_to_message.from_user.id == context.bot.id
+    )
 
     if not matches:
         if is_private or is_reply_to_bot:
@@ -34,7 +38,12 @@ async def calculate_expression(update: Update, context: ContextTypes.DEFAULT_TYP
             if isinstance(result, float):
                 result = round(result, 2)
             reply = f"{original} = {result}"
-            await safe_send_message(context.bot, ui['chat_id'], reply, reply_to=update.message.message_id if not is_private else None)
+            await safe_send_message(
+                context.bot,
+                ui['chat_id'],
+                reply,
+                reply_to=update.message.message_id if not is_private else None
+            )
         except InvalidExpression:
             logger.warning(f"Invalid expression: {original}")
         except Exception as e:
