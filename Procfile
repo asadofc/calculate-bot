@@ -1,1 +1,1 @@
-start: python main.py
+web: python calculate/bot/main.py
